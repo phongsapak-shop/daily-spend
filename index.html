@@ -13,20 +13,17 @@
 
 <style>
 * { box-sizing: border-box; }
-
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
   background: linear-gradient(135deg,#667eea,#764ba2);
   min-height: 100vh;
 }
-
 .container {
   max-width: 420px;
   margin: auto;
   padding: 16px;
 }
-
 .card {
   background: #fff;
   border-radius: 20px;
@@ -34,9 +31,7 @@ body {
   margin-bottom: 16px;
   box-shadow: 0 10px 25px rgba(0,0,0,.15);
 }
-
 h2 { margin-top: 0; }
-
 input, select, button {
   width: 100%;
   padding: 12px;
@@ -45,7 +40,6 @@ input, select, button {
   border: 1px solid #ddd;
   font-size: 16px;
 }
-
 button {
   background: linear-gradient(135deg,#667eea,#764ba2);
   color: #fff;
@@ -53,28 +47,24 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
-
-button:active { transform: scale(.97); }
-
-.clear-btn {
-  margin-top: 12px;
+button.red {
   background: linear-gradient(135deg,#ff416c,#ff4b2b);
-  color: #fff;
 }
-
+button.gray {
+  background: #ccc;
+  color: #333;
+}
 img {
   width: 100%;
   border-radius: 12px;
   display: none;
   margin-bottom: 12px;
 }
-
 .budget-display {
   text-align: center;
   font-size: 20px;
   font-weight: bold;
 }
-
 .green { color:#2ecc71 }
 .yellow { color:#f1c40f }
 .redText { color:#e74c3c }
@@ -107,7 +97,6 @@ img {
   <h2>บันทึกค่าใช้จ่าย</h2>
   <input id="expenseName" placeholder="ใช้จ่ายอะไร">
   <input type="number" id="expenseAmount" placeholder="จำนวนเงิน">
-
   <select id="expenseCategory">
     <option>อาหาร</option>
     <option>เดินทาง</option>
@@ -128,18 +117,12 @@ img {
   <div id="history"></div>
 
   <button onclick="exportExcel()">📤 Export Excel</button>
-
-  <!-- ปุ่มล้าง (ขึ้นแน่นอน) -->
-  <button class="clear-btn" onclick="clearHistory()">
-    🗑 ล้างประวัติทั้งหมด
-  </button>
+  <button class="red" onclick="clearHistory()">🗑 ล้างประวัติทั้งหมด</button>
 </div>
 
 <!-- ยอดคงเหลือ (ล่างสุด) -->
 <div class="card">
-  <div id="budgetDisplay" class="budget-display">
-    ยังไม่ได้ตั้งงบ
-  </div>
+  <div id="budgetDisplay" class="budget-display">ยังไม่ได้ตั้งงบ</div>
 </div>
 
 </div>
@@ -151,23 +134,22 @@ let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 const budgetDisplay = document.getElementById('budgetDisplay');
 const historyDiv = document.getElementById('history');
 
-/* ===== งบ ===== */
+/* -------- งบ -------- */
 function saveBudget() {
   const amount = Number(budgetAmount.value);
   const type = budgetType.value;
-  if (!amount) return alert('กรอกงบประมาณ');
+  if (!amount) return alert('กรอกงบ');
 
   budget = { amount, type };
   localStorage.setItem('budget', JSON.stringify(budget));
   updateDisplay();
 }
 
-/* ===== ค่าใช้จ่าย ===== */
+/* -------- ค่าใช้จ่าย -------- */
 function saveExpense() {
   const name = expenseName.value;
   const amount = Number(expenseAmount.value);
   const cat = expenseCategory.value;
-
   if (!name || !amount) return alert('กรอกข้อมูลไม่ครบ');
 
   expenses.push({
@@ -176,16 +158,14 @@ function saveExpense() {
   });
 
   localStorage.setItem('expenses', JSON.stringify(expenses));
-
   expenseName.value = '';
   expenseAmount.value = '';
   preview.style.display = 'none';
-
   renderHistory();
   updateDisplay();
 }
 
-/* ===== แสดงงบ ===== */
+/* -------- แสดงงบ -------- */
 function updateDisplay() {
   if (!budget) {
     budgetDisplay.textContent = 'ยังไม่ได้ตั้งงบ';
@@ -205,7 +185,7 @@ function updateDisplay() {
     `เหลือ ${remain} บาท (${budget.type})`;
 }
 
-/* ===== ประวัติ ===== */
+/* -------- ประวัติ -------- */
 function renderHistory() {
   historyDiv.innerHTML = '';
   expenses.slice().reverse().forEach(e=>{
@@ -217,42 +197,38 @@ function renderHistory() {
   });
 }
 
-/* ===== ล้างประวัติทั้งหมด ===== */
+/* -------- ล้างทั้งหมด -------- */
 function clearHistory() {
-  if (!confirm('ล้างประวัติทั้งหมดใช่หรือไม่?')) return;
+  if (!confirm('ล้างประวัติทั้งหมด?')) return;
   expenses = [];
   localStorage.removeItem('expenses');
   renderHistory();
   updateDisplay();
 }
 
-/* ===== Export Excel ===== */
+/* -------- Export Excel -------- */
 function exportExcel() {
   if (expenses.length === 0) return alert('ไม่มีข้อมูล');
-
   const ws = XLSX.utils.json_to_sheet(expenses);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
   XLSX.writeFile(wb, 'expenses.xlsx');
 }
 
-/* ===== OCR ===== */
+/* -------- OCR -------- */
 async function scanSlip() {
   if (!preview.src) return alert('เลือกรูปก่อน');
-
-  alert('กำลังสแกนสลิป...');
+  alert('กำลังสแกน...');
   const res = await Tesseract.recognize(preview.src,'eng+tha');
   const nums = res.data.text.match(/\d+(\.\d{1,2})?/g);
-  if (!nums) return alert('ไม่พบยอดเงิน');
-
+  if (!nums) return alert('ไม่พบยอด');
   expenseAmount.value = Math.max(...nums.map(Number));
 }
 
-/* ===== รูป ===== */
+/* -------- รูป -------- */
 photoInput.onchange = e => {
   const file = e.target.files[0];
   if (!file) return;
-
   const r = new FileReader();
   r.onload = () => {
     preview.src = r.result;
