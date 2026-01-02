@@ -65,6 +65,19 @@
 </div>
 
 <script>
+  <script>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  // 👈 ใส่ของคุณตรงนี้
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+</script>
+
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
 function addExpense() {
@@ -158,5 +171,6 @@ function stopScanner() {
 
 </body>
 </html>
+
 
 
