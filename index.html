@@ -1,141 +1,92 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Daily Spend</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Barcode Scanner -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#10b981">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#f5f5f5; padding:20px }
+    h1 { font-size:24px }
+    .card { background:white; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 4px 10px rgba(0,0,0,.05) }
+    input, button { width:100%; padding:10px; margin-top:8px; font-size:16px }
+    button { background:#2563eb; color:white; border:none; border-radius:8px }
+    table { width:100%; border-collapse:collapse; margin-top:10px }
+    th, td { padding:8px; border-bottom:1px solid #ddd; text-align:left }
+  </style>
 </head>
+<body>
 
-<body class="bg-gray-900 text-white min-h-screen flex justify-center">
+<h1>📷 ระบบบันทึกรายจ่ายด้วยบาร์โค้ด</h1>
 
-<div class="w-full max-w-md p-6 space-y-6">
+<div class="card">
+  <h3>สแกนบาร์โค้ด</h3>
+  <div id="reader"></div>
+</div>
 
-  <h1 class="text-2xl font-bold text-center">💸 วันนี้ใช้ไป</h1>
-  <p id="total" class="text-4xl font-extrabold text-center text-green-400">0 บาท</p>
+<div class="card">
+  <h3>ข้อมูลสินค้า</h3>
+  <input id="name" placeholder="ชื่อสินค้า" />
+  <input id="price" type="number" placeholder="ราคา (บาท)" />
+  <button onclick="saveItem()">บันทึกรายจ่าย</button>
+</div>
 
-  <div class="grid grid-cols-2 gap-3">
-    <button onclick="startScanner()" class="bg-blue-500 p-3 rounded font-bold text-black">
-      📷 สแกนบาร์โค้ด
-    </button>
-    <button onclick="addExpense()" class="bg-green-500 p-3 rounded font-bold text-black">
-      + เพิ่มรายจ่าย
-    </button>
-  </div>
-
-  <input id="amount" type="number" placeholder="จำนวนเงิน"
-    class="w-full p-3 rounded bg-gray-800 text-white text-lg">
-
-  <select id="category" class="w-full p-3 rounded bg-gray-800 text-white text-lg">
-    <option value="🍜 อาหาร">🍜 อาหาร</option>
-    <option value="🚗 เดินทาง">🚗 เดินทาง</option>
-    <option value="☕ เครื่องดื่ม">☕ เครื่องดื่ม</option>
-    <option value="📦 อื่นๆ">📦 อื่นๆ</option>
-  </select>
-
-  <div id="scanner" class="hidden">
-    <div id="camera" class="rounded overflow-hidden"></div>
-    <button onclick="stopScanner()" class="w-full mt-2 bg-red-500 text-black p-2 rounded">
-      ❌ ปิดกล้อง
-    </button>
-  </div>
-
-  <ul id="list" class="space-y-2 text-sm"></ul>
-
+<div class="card">
+  <h3>รายการวันนี้</h3>
+  <table>
+    <thead><tr><th>สินค้า</th><th>ราคา</th></tr></thead>
+    <tbody id="list"></tbody>
+  </table>
+  <h3 id="total">รวม: 0 บาท</h3>
 </div>
 
 <script>
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-
-function addExpense() {
-  const amount = document.getElementById("amount").value;
-  const category = document.getElementById("category").value;
-  if (!amount) return;
-
-  expenses.push({
-    id: Date.now(),
-    amount: Number(amount),
-    category,
-    date: new Date().toDateString()
-  });
-
-  localStorage.setItem("expenses", JSON.stringify(expenses));
-  document.getElementById("amount").value = "";
-  render();
-}
-
-function deleteExpense(id) {
-  expenses = expenses.filter(e => e.id !== id);
-  localStorage.setItem("expenses", JSON.stringify(expenses));
-  render();
-}
+let scannedBarcode = null;
+let items = JSON.parse(localStorage.getItem('items') || '[]');
 
 function render() {
-  const today = new Date().toDateString();
-  const todayExpenses = expenses.filter(e => e.date === today);
-
-  let total = 0;
-  document.getElementById("list").innerHTML = "";
-
-  todayExpenses.forEach(e => {
-    total += e.amount;
-    document.getElementById("list").innerHTML += `
-      <li class="bg-gray-800 p-2 rounded flex justify-between">
-        <span>${e.category}</span>
-        <span>
-          ${e.amount} บาท
-          <button onclick="deleteExpense(${e.id})" class="text-red-400 ml-2">✖</button>
-        </span>
-      </li>
-    `;
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  let sum = 0;
+  items.forEach(i => {
+    sum += i.price;
+    list.innerHTML += `<tr><td>${i.name}</td><td>${i.price}</td></tr>`;
   });
-
-  document.getElementById("total").innerText = total + " บาท";
+  document.getElementById('total').innerText = `รวม: ${sum} บาท`;
+  localStorage.setItem('items', JSON.stringify(items));
 }
+
+function saveItem() {
+  const name = document.getElementById('name').value;
+  const price = Number(document.getElementById('price').value);
+  if (!name || !price) return alert('กรอกข้อมูลให้ครบ');
+  items.push({ name, price, date: new Date() });
+  document.getElementById('name').value = '';
+  document.getElementById('price').value = '';
+  render();
+}
+
+function onScanSuccess(code) {
+  scannedBarcode = code;
+  fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.product) {
+        document.getElementById('name').value = d.product.product_name || 'ไม่ทราบชื่อ';
+      } else {
+        document.getElementById('name').value = 'ไม่พบสินค้า';
+      }
+    });
+}
+
+new Html5Qrcode('reader').start(
+  { facingMode: 'environment' },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+);
 
 render();
-
-// BARCODE
-function startScanner() {
-  document.getElementById("scanner").classList.remove("hidden");
-
-  Quagga.init({
-    inputStream: {
-      type: "LiveStream",
-      target: document.querySelector("#camera"),
-      constraints: { facingMode: "environment" }
-    },
-    decoder: { readers: ["ean_reader", "upc_reader"] }
-  }, err => {
-    if (err) return alert("เปิดกล้องไม่ได้");
-    Quagga.start();
-  });
-
-  Quagga.onDetected(result => {
-    stopScanner();
-     // เดาเป็นเครื่องดื่มก่อน (น้ำ / ขวด / กระป๋อง)
-  document.getElementById("category").value = "☕ เครื่องดื่ม";;
-    // ใส่ราคาประมาณให้ทันที
-  document.getElementById("amount").value = guessPrice("เครื่องดื่ม");
-  alert("สแกนแล้ว ✔\nตรวจราคานิดนึง แล้วกดเพิ่มรายจ่าย");
-  });
-}
-
-function stopScanner() {
-  Quagga.stop();
-  document.getElementById("scanner").classList.add("hidden");
-}
 </script>
 
 </body>
 </html>
-
