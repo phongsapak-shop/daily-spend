@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <title>Daily Spend</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#10b981">
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
-
-
-  <!-- QuaggaJS -->
+  <!-- Barcode Scanner -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
 </head>
 
 <body class="bg-gray-900 text-white min-h-screen flex justify-center">
@@ -23,43 +23,32 @@
   <h1 class="text-2xl font-bold text-center">💸 วันนี้ใช้ไป</h1>
   <p id="total" class="text-4xl font-extrabold text-center text-green-400">0 บาท</p>
 
-  <!-- BUTTONS -->
   <div class="grid grid-cols-2 gap-3">
-    <button onclick="startScanner()"
-      class="bg-blue-500 text-black font-bold p-3 rounded text-lg">
+    <button onclick="startScanner()" class="bg-blue-500 p-3 rounded font-bold text-black">
       📷 สแกนบาร์โค้ด
     </button>
-
-    <button onclick="addExpense()"
-      class="bg-green-500 text-black font-bold p-3 rounded text-lg">
+    <button onclick="addExpense()" class="bg-green-500 p-3 rounded font-bold text-black">
       + เพิ่มรายจ่าย
     </button>
   </div>
 
-  <!-- INPUT -->
-  <div class="space-y-3">
-    <input id="amount" type="number" placeholder="จำนวนเงิน"
-      class="w-full p-3 rounded bg-gray-800 text-white text-lg">
+  <input id="amount" type="number" placeholder="จำนวนเงิน"
+    class="w-full p-3 rounded bg-gray-800 text-white text-lg">
 
-    <select id="category"
-      class="w-full p-3 rounded bg-gray-800 text-white text-lg">
-      <option value="🍜 อาหาร">🍜 อาหาร</option>
-      <option value="🚗 เดินทาง">🚗 เดินทาง</option>
-      <option value="☕ เครื่องดื่ม">☕ เครื่องดื่ม</option>
-      <option value="📦 อื่นๆ">📦 อื่นๆ</option>
-    </select>
-  </div>
+  <select id="category" class="w-full p-3 rounded bg-gray-800 text-white text-lg">
+    <option value="🍜 อาหาร">🍜 อาหาร</option>
+    <option value="🚗 เดินทาง">🚗 เดินทาง</option>
+    <option value="☕ เครื่องดื่ม">☕ เครื่องดื่ม</option>
+    <option value="📦 อื่นๆ">📦 อื่นๆ</option>
+  </select>
 
-  <!-- SCANNER -->
   <div id="scanner" class="hidden">
     <div id="camera" class="rounded overflow-hidden"></div>
-    <button onclick="stopScanner()"
-      class="mt-2 w-full bg-red-500 text-black p-2 rounded">
+    <button onclick="stopScanner()" class="w-full mt-2 bg-red-500 text-black p-2 rounded">
       ❌ ปิดกล้อง
     </button>
   </div>
 
-  <!-- LIST -->
   <ul id="list" class="space-y-2 text-sm"></ul>
 
 </div>
@@ -100,7 +89,7 @@ function render() {
   todayExpenses.forEach(e => {
     total += e.amount;
     document.getElementById("list").innerHTML += `
-      <li class="bg-gray-800 p-2 rounded flex justify-between items-center">
+      <li class="bg-gray-800 p-2 rounded flex justify-between">
         <span>${e.category}</span>
         <span>
           ${e.amount} บาท
@@ -115,38 +104,26 @@ function render() {
 
 render();
 
-
-// ===== BARCODE =====
+// BARCODE
 function startScanner() {
   document.getElementById("scanner").classList.remove("hidden");
 
   Quagga.init({
     inputStream: {
-      name: "Live",
       type: "LiveStream",
-      target: document.querySelector('#camera'),
-      constraints: {
-        facingMode: "environment"
-      }
+      target: document.querySelector("#camera"),
+      constraints: { facingMode: "environment" }
     },
-    decoder: {
-      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-    }
-  }, function(err) {
-    if (err) {
-      alert("ไม่สามารถเปิดกล้องได้");
-      return;
-    }
+    decoder: { readers: ["ean_reader", "upc_reader"] }
+  }, err => {
+    if (err) return alert("เปิดกล้องไม่ได้");
     Quagga.start();
   });
 
-  Quagga.onDetected(function(result) {
-    const code = result.codeResult.code;
+  Quagga.onDetected(result => {
     stopScanner();
-
-    // เดาหมวดจากบาร์โค้ด (พื้นฐาน)
+    alert("สแกนสำเร็จ\nกรอกราคาแล้วกดเพิ่มรายจ่าย");
     document.getElementById("category").value = "🍜 อาหาร";
-    alert("สแกนสำเร็จ\nBarcode: " + code + "\nกรอกราคาแล้วกดเพิ่มรายจ่าย");
   });
 }
 
@@ -158,7 +135,3 @@ function stopScanner() {
 
 </body>
 </html>
-
-
-
-
