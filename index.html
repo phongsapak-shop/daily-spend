@@ -84,25 +84,6 @@ img {
   padding: 8px 0;
   font-size: 14px;
 }
-.floating-balance {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  padding: 14px 22px;
-  border-radius: 999px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-  font-size: 18px;
-  font-weight: bold;
-  z-index: 9999;
-  transition: all .3s ease;
-}
-
-.floating-green { color: #2ecc71; }
-.floating-yellow { color: #f1c40f; }
-.floating-red { color: #e74c3c; }
-
 </style>
 </head>
 
@@ -279,10 +260,6 @@ photoInput.onchange = e => {
   };
   r.readAsDataURL(file);
 };
-<div id="floatingBalance" class="floating-balance">
-  ยังไม่ได้ตั้งงบ
-</div>
-
 
 renderHistory();
 updateDisplay();
