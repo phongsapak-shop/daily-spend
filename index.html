@@ -1,237 +1,268 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Expense Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker</title>
 
-  <style>
-    * { box-sizing: border-box; }
+<!-- Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      min-height: 100vh;
-      overflow-x: hidden;
-      padding-bottom: 90px; /* กันโดนแถบล่าง */
-    }
+<!-- OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-    .container {
-      max-width: 420px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    .card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      width: 100%;
-    }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  min-height: 100vh;
+}
 
-    h2 {
-      margin-top: 0;
-      margin-bottom: 12px;
-    }
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 16px;
+}
 
-    label {
-      font-size: 14px;
-      color: #555;
-    }
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+}
 
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 6px;
-      margin-bottom: 12px;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      font-size: 16px;
-    }
+h2 { margin-top: 0; }
 
-    button {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+}
 
-    button:active {
-      transform: scale(0.97);
-    }
+button {
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    img {
-      max-width: 100%;
-      border-radius: 12px;
-      display: none;
-      margin-bottom: 12px;
-    }
+button:active { transform: scale(.97); }
 
-    /* ===== Budget Display (Bottom Fixed) ===== */
-    .budget-fixed {
-      position: fixed;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 420px;
-      z-index: 1000;
-    }
+.clear-btn {
+  margin-top: 12px;
+  background: linear-gradient(135deg,#ff416c,#ff4b2b);
+  color: #fff;
+}
 
-    .budget-display {
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      background: #fff;
-      padding: 14px 16px;
-      border-radius: 999px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-    }
+img {
+  width: 100%;
+  border-radius: 12px;
+  display: none;
+  margin-bottom: 12px;
+}
 
-    .budget-green { color: #2ecc71; }
-    .budget-yellow { color: #f1c40f; }
-    .budget-red { color: #e74c3c; }
-  </style>
+.budget-display {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.green { color:#2ecc71 }
+.yellow { color:#f1c40f }
+.redText { color:#e74c3c }
+
+.history-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px 0;
+  font-size: 14px;
+}
+</style>
 </head>
 
 <body>
+<div class="container">
 
-  <div class="container">
+<!-- ตั้งงบ -->
+<div class="card">
+  <h2>ตั้งงบประมาณ</h2>
+  <input type="number" id="budgetAmount" placeholder="จำนวนเงิน">
+  <select id="budgetType">
+    <option value="รายวัน">รายวัน</option>
+    <option value="รายสัปดาห์">รายสัปดาห์</option>
+    <option value="รายเดือน">รายเดือน</option>
+  </select>
+  <button onclick="saveBudget()">บันทึกงบ</button>
+</div>
 
-    <!-- ตั้งงบ -->
-    <div class="card">
-      <h2>🎯 ตั้งงบประมาณ</h2>
-      <label>จำนวนเงินต้นทุน</label>
-      <input type="number" id="budgetAmount" placeholder="เช่น 500" />
+<!-- บันทึกค่าใช้จ่าย -->
+<div class="card">
+  <h2>บันทึกค่าใช้จ่าย</h2>
+  <input id="expenseName" placeholder="ใช้จ่ายอะไร">
+  <input type="number" id="expenseAmount" placeholder="จำนวนเงิน">
 
-      <label>ประเภทงบ</label>
-      <select id="budgetType">
-        <option value="daily">รายวัน</option>
-        <option value="weekly">รายสัปดาห์</option>
-        <option value="monthly">รายเดือน</option>
-      </select>
+  <select id="expenseCategory">
+    <option>อาหาร</option>
+    <option>เดินทาง</option>
+    <option>ของใช้</option>
+    <option>อื่น ๆ</option>
+  </select>
 
-      <button onclick="saveBudget()">บันทึกงบ</button>
-    </div>
+  <input type="file" accept="image/*" id="photoInput">
+  <img id="preview">
 
-    <!-- บันทึกค่าใช้จ่าย -->
-    <div class="card">
-      <h2>🧾 บันทึกค่าใช้จ่าย</h2>
+  <button type="button" onclick="scanSlip()">📸 สแกนสลิป (OCR)</button>
+  <button onclick="saveExpense()">บันทึก</button>
+</div>
 
-      <label>ใช้จ่ายอะไร</label>
-      <input type="text" id="expenseName" placeholder="เช่น น้ำดื่ม" />
+<!-- ประวัติ -->
+<div class="card">
+  <h2>📜 ประวัติย้อนหลัง</h2>
+  <div id="history"></div>
 
-      <label>จำนวนเงิน</label>
-      <input type="number" id="expenseAmount" placeholder="เช่น 20" />
+  <button onclick="exportExcel()">📤 Export Excel</button>
 
-      <label>หมวดหมู่</label>
-      <select id="expenseCategory">
-        <option>อาหาร</option>
-        <option>เดินทาง</option>
-        <option>ของใช้</option>
-        <option>อื่น ๆ</option>
-      </select>
+  <!-- ปุ่มล้าง (ขึ้นแน่นอน) -->
+  <button class="clear-btn" onclick="clearHistory()">
+    🗑 ล้างประวัติทั้งหมด
+  </button>
+</div>
 
-      <label>ถ่ายรูป</label>
-      <input type="file" accept="image/*" id="photoInput" />
-      <img id="preview" />
-
-      <button onclick="saveExpense()">บันทึก</button>
-    </div>
-
+<!-- ยอดคงเหลือ (ล่างสุด) -->
+<div class="card">
+  <div id="budgetDisplay" class="budget-display">
+    ยังไม่ได้ตั้งงบ
   </div>
+</div>
 
-  <!-- ยอดคงเหลือ (ล่างสุด) -->
-  <div class="budget-fixed">
-    <div id="budgetDisplay" class="budget-display">
-      ยังไม่ได้ตั้งงบ
-    </div>
-  </div>
+</div>
 
 <script>
-  let budget = JSON.parse(localStorage.getItem('budget')) || null;
-  let spent = Number(localStorage.getItem('spent')) || 0;
+let budget = JSON.parse(localStorage.getItem('budget'));
+let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 
-  const display = document.getElementById('budgetDisplay');
+const budgetDisplay = document.getElementById('budgetDisplay');
+const historyDiv = document.getElementById('history');
 
-  function updateDisplay() {
-    if (!budget) {
-      display.textContent = 'ยังไม่ได้ตั้งงบ';
-      display.className = 'budget-display';
-      return;
-    }
+/* ===== งบ ===== */
+function saveBudget() {
+  const amount = Number(budgetAmount.value);
+  const type = budgetType.value;
+  if (!amount) return alert('กรอกงบประมาณ');
 
-    const remaining = budget.amount - spent;
-    const ratio = remaining / budget.amount;
+  budget = { amount, type };
+  localStorage.setItem('budget', JSON.stringify(budget));
+  updateDisplay();
+}
 
-    let color = 'budget-green';
-    if (ratio < 0.3) color = 'budget-red';
-    else if (ratio < 0.6) color = 'budget-yellow';
+/* ===== ค่าใช้จ่าย ===== */
+function saveExpense() {
+  const name = expenseName.value;
+  const amount = Number(expenseAmount.value);
+  const cat = expenseCategory.value;
 
-    display.className = 'budget-display ' + color;
-    display.textContent = `เหลือ ${remaining} บาท (${budget.type})`;
-  }
+  if (!name || !amount) return alert('กรอกข้อมูลไม่ครบ');
 
-  function saveBudget() {
-    const amount = Number(document.getElementById('budgetAmount').value);
-    const type = document.getElementById('budgetType').value;
-
-    if (!amount) {
-      alert('กรุณากรอกจำนวนเงิน');
-      return;
-    }
-
-    budget = {
-      amount,
-      type,
-      start: Date.now()
-    };
-
-    spent = 0;
-    localStorage.setItem('budget', JSON.stringify(budget));
-    localStorage.setItem('spent', spent);
-    updateDisplay();
-  }
-
-  function saveExpense() {
-    const name = document.getElementById('expenseName').value;
-    const amount = Number(document.getElementById('expenseAmount').value);
-
-    if (!name || !amount) {
-      alert('กรอกข้อมูลให้ครบ');
-      return;
-    }
-
-    spent += amount;
-    localStorage.setItem('spent', spent);
-    updateDisplay();
-
-    document.getElementById('expenseName').value = '';
-    document.getElementById('expenseAmount').value = '';
-    document.getElementById('photoInput').value = '';
-    document.getElementById('preview').style.display = 'none';
-  }
-
-  document.getElementById('photoInput').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = document.getElementById('preview');
-      img.src = reader.result;
-      img.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+  expenses.push({
+    name, amount, cat,
+    time: new Date().toLocaleString()
   });
 
-  updateDisplay();
-</script>
+  localStorage.setItem('expenses', JSON.stringify(expenses));
 
+  expenseName.value = '';
+  expenseAmount.value = '';
+  preview.style.display = 'none';
+
+  renderHistory();
+  updateDisplay();
+}
+
+/* ===== แสดงงบ ===== */
+function updateDisplay() {
+  if (!budget) {
+    budgetDisplay.textContent = 'ยังไม่ได้ตั้งงบ';
+    return;
+  }
+
+  const spent = expenses.reduce((s,e)=>s+e.amount,0);
+  const remain = budget.amount - spent;
+  const ratio = remain / budget.amount;
+
+  let cls = 'green';
+  if (ratio < 0.3) cls = 'redText';
+  else if (ratio < 0.6) cls = 'yellow';
+
+  budgetDisplay.className = 'budget-display ' + cls;
+  budgetDisplay.textContent =
+    `เหลือ ${remain} บาท (${budget.type})`;
+}
+
+/* ===== ประวัติ ===== */
+function renderHistory() {
+  historyDiv.innerHTML = '';
+  expenses.slice().reverse().forEach(e=>{
+    historyDiv.innerHTML += `
+      <div class="history-item">
+        <b>${e.name}</b> - ${e.amount} บาท<br>
+        ${e.cat} | ${e.time}
+      </div>`;
+  });
+}
+
+/* ===== ล้างประวัติทั้งหมด ===== */
+function clearHistory() {
+  if (!confirm('ล้างประวัติทั้งหมดใช่หรือไม่?')) return;
+  expenses = [];
+  localStorage.removeItem('expenses');
+  renderHistory();
+  updateDisplay();
+}
+
+/* ===== Export Excel ===== */
+function exportExcel() {
+  if (expenses.length === 0) return alert('ไม่มีข้อมูล');
+
+  const ws = XLSX.utils.json_to_sheet(expenses);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+  XLSX.writeFile(wb, 'expenses.xlsx');
+}
+
+/* ===== OCR ===== */
+async function scanSlip() {
+  if (!preview.src) return alert('เลือกรูปก่อน');
+
+  alert('กำลังสแกนสลิป...');
+  const res = await Tesseract.recognize(preview.src,'eng+tha');
+  const nums = res.data.text.match(/\d+(\.\d{1,2})?/g);
+  if (!nums) return alert('ไม่พบยอดเงิน');
+
+  expenseAmount.value = Math.max(...nums.map(Number));
+}
+
+/* ===== รูป ===== */
+photoInput.onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const r = new FileReader();
+  r.onload = () => {
+    preview.src = r.result;
+    preview.style.display = 'block';
+  };
+  r.readAsDataURL(file);
+};
+
+renderHistory();
+updateDisplay();
+</script>
 </body>
 </html>
