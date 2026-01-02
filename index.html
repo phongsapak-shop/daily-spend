@@ -71,7 +71,27 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  // 👈 ใส่ของคุณตรงนี้
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDCnRL9p7Nqsl6Ch9FgwbxZcNPDaVr0SPE",
+  authDomain: "daily-spend-15913.firebaseapp.com",
+  projectId: "daily-spend-15913",
+  storageBucket: "daily-spend-15913.firebasestorage.app",
+  messagingSenderId: "746810840466",
+  appId: "1:746810840466:web:cda3733e926010bad6dd4b",
+  measurementId: "G-80W2W4RPNL"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 };
 
 const app = initializeApp(firebaseConfig);
@@ -171,6 +191,7 @@ function stopScanner() {
 
 </body>
 </html>
+
 
 
 
